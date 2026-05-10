@@ -3,35 +3,26 @@ import CodeEditor from './components/CodeEditor'
 import ReviewPanel from './components/ReviewPanel'
 import { streamReview } from './services/api'
 import { starterCode, languages } from './constants'
+import { useStreamingText } from './hooks/useStreamingText'
 
 export default function App() {
   const [code, setCode] = useState(starterCode.typescript)
   const [language, setLanguage] = useState('typescript')
-  const [review, setReview] = useState('')
+  // const [review, setReview] = useState('')
   const [loading, setLoading] = useState(false)
+  const { text, pushChunk, reset } = useStreamingText()
 
-const handleReview =
-  async () => {
+  const handleReview = async () => {
     try {
       setLoading(true)
-
-      setReview('')
+      reset()
 
       await streamReview(
         code,
         language,
         (chunk) => {
-          setReview(
-            (prev) =>
-              prev + chunk
-          )
+          pushChunk(chunk)
         }
-      )
-    } catch (error) {
-      console.error(error)
-
-      setReview(
-        'Failed to review code.'
       )
     } finally {
       setLoading(false)
@@ -84,7 +75,7 @@ const handleReview =
 
         <section className="w-[40%] min-w-[400px]">
           <ReviewPanel
-            review={review}
+            review={text}
             loading={loading}
           />
         </section>

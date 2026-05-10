@@ -1,31 +1,51 @@
-import { useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 
 export function useStreamingText() {
   const [text, setText] = useState('')
+
   const bufferRef = useRef('')
-  const frameRef = useRef<number | null>(null)
+  const rafRef = useRef<number | null>(null)
 
-  function flushBuffer() {
-    if (bufferRef.current.length === 0) return
+  const isFlushingRef = useRef(false)
 
-    setText(prev => prev + bufferRef.current)
-    bufferRef.current = ''
+  const flush = useCallback(() => {
+    if (isFlushingRef.current) return
 
-    frameRef.current = requestAnimationFrame(flushBuffer)
-  }
+    isFlushingRef.current = true
 
-  function pushChunk(chunk: string) {
+    const run = () => {
+      if (bufferRef.current.length > 0) {
+        const words = bufferRef.current.split(' ')
+        setText(prev => prev + words.join(' '))
+        bufferRef.current = ''
+      }
+
+      rafRef.current = requestAnimationFrame(run)
+    }
+
+    rafRef.current = requestAnimationFrame(run)
+  }, [])
+
+  const pushChunk = useCallback((chunk: string) => {
     bufferRef.current += chunk
 
-    if (frameRef.current === null) {
-      frameRef.current = requestAnimationFrame(flushBuffer)
+    if (!rafRef.current) {
+      flush()
     }
-  }
+  }, [flush])
 
-  function reset() {
+  const reset = useCallback(() => {
     setText('')
+
     bufferRef.current = ''
-  }
+
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
+
+    isFlushingRef.current = false
+  }, [])
 
   return {
     text,

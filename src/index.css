@@ -15,3 +15,17 @@ body {
   color: white;
   font-family: Inter, sans-serif;
 }
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.cursor {
+  display: inline-block;
+  width: 8px;
+  margin-left: 2px;
+  background: #60a5fa;
+  animation: blink 1s infinite;
+}

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import CodeEditor from './components/CodeEditor'
 import ReviewPanel from './components/ReviewPanel'
-import { reviewCode } from './services/api'
+import { streamReview } from './services/api'
 import { starterCode, languages } from './constants'
 
 export default function App() {
@@ -10,18 +10,29 @@ export default function App() {
   const [review, setReview] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleReview = async () => {
+const handleReview =
+  async () => {
     try {
       setLoading(true)
+
       setReview('')
 
-      const result = await reviewCode(code, language)
-
-      setReview(result.review)
+      await streamReview(
+        code,
+        language,
+        (chunk) => {
+          setReview(
+            (prev) =>
+              prev + chunk
+          )
+        }
+      )
     } catch (error) {
       console.error(error)
 
-      setReview('Failed to review code.')
+      setReview(
+        'Failed to review code.'
+      )
     } finally {
       setLoading(false)
     }
